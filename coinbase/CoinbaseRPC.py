@@ -22,7 +22,7 @@ class CoinbaseRPC(object):
     Abstracts functionality for executing remote procedure calls.
     '''
 
-    COINBASE_API = 'https://coinbase.com/api/v1'
+    COINBASE_API = 'https://api.coinbase.com/v2'
 
     def __init__(self, authentication, nonce=None):
         self.__authentication = authentication
@@ -50,7 +50,7 @@ class CoinbaseRPC(object):
             headers['Authorization'] = 'Bearer ' + auth['access_token']
         elif isinstance(self.__authentication, CoinbaseAPIKeyAuthentication):
             if self.__nonce is None:
-                self.__nonce = int(time.time() * 1e6)
+                self.__nonce = int(time.time())
             message = str(self.__nonce) + url
 
             if method == 'post' or method == 'put':
@@ -64,13 +64,14 @@ class CoinbaseRPC(object):
                     hashlib.sha256) \
                 .hexdigest()
 
-            headers['ACCESS_KEY'] = auth['api_key']
-            headers['ACCESS_SIGNATURE'] = signature
-            headers['ACCESS_NONCE'] = self.__nonce
+            headers['CB-ACCESS-KEY'] = auth['api_key']
+            headers['CB-ACCESS-SIGN'] = signature
+            headers['CB-ACCESS-TIMESTAMP'] = str(self.__nonce)
             headers['Accept'] = 'application/json'
         else:
             raise CoinbaseAPIException('Invalid authentication mechanism')
 
+        print(f"{method} {url} {headers}")
         if method == 'get':
             request = requests.get(url, headers=headers)
         elif method == 'delete':
